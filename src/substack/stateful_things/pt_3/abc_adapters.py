@@ -9,41 +9,36 @@ import polars as pl
 
 class IoBase(ABC):
     @abstractmethod
-    def read_json(self, path: str) -> dict: ...
+    def read(self, path: str, file_type: str) -> dict | pl.DataFrame: ...
     @abstractmethod
-    def write_json(self, data: dict, path: str) -> None: ...
-    @abstractmethod
-    def read_parquet(self, path: str) -> pl.DataFrame: ...
-    @abstractmethod
-    def write_parquet(self, data: pl.DataFrame, path: str) -> None: ...
+    def write(self, data: dict | pl.DataFrame, path: str, file_type: str) -> None: ...
 
 
-class RealIo(IoBase):
-    def read_json(self, path: str) -> dict:
-        return json.loads(Path(path).read_text())
+class RealIoV2(IoBase):
+    def read(self, path: str, file_type: str) -> dict | pl.DataFrame:
+        if file_type == "json":
+            return json.loads(Path(path).read_text())
+        if file_type == "parquet":
+            return pl.read_parquet(path)
+        raise ValueError(f"given invalid {file_type = }")
 
-    def write_json(self, data: dict, path: str) -> None:
-        Path(path).write_text(json.dumps(data))
-
-    def read_parquet(self, path: str) -> pl.DataFrame:
-        return pl.read_parquet(path)
-
-    def write_parquet(self, data: pl.DataFrame, path: str) -> None:
-        data.to_parquet(path)
+    def write(self, data: dict | pl.DataFrame, path: str, file_type: str) -> None:
+        if file_type == "json":
+            Path(path).write_text(json.dumps(data))
+        elif file_type == "parquet":
+            data.to_parquet(path)
+        raise ValueError(f"given invalid {file_type = }")
 
 
-class FakeIo(IoBase):
+class FakeIoV2(IoBase):
     def __init__(self, files: dict | None = None) -> None:
         self.files = files or {}
+        self.log = []
 
-    def read_json(self, path: str) -> dict:
+    def read(self, path: str, file_type: str) -> dict | pl.DataFrame:
+        self.log.append({"func": "read", "path": path, "file_type": file_type})
         return self.files[path]
 
-    def write_json(self, data: dict, path: str) -> None:
-        self.files[path] = data
-
-    def read_parquet(self, path: str) -> pl.DataFrame:
-        return self.files[path]
-
-    def write_parquet(self, data: pl.DataFrame, path: str) -> None:
+    def write(self, data: dict | pl.DataFrame, path: str, file_type: str) -> None:
+        self.log.append({"func": "write", "path": path, "file_type": file_type})
         self.files[path] = data

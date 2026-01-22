@@ -2,6 +2,7 @@ import inspect
 
 import pytest
 
+from substack.stateful_things.pt_3.abc_adapters import FakeIoV2, IoBase, RealIoV2
 from substack.stateful_things.pt_3.adapters import FakeIo, IoProtocol, RealIo
 
 
@@ -62,6 +63,16 @@ class FakeMismatchingSignature:
             RealIo,
             IoProtocol,
             id="ensure IO wrapper matches protocol",
+        ),
+        pytest.param(
+            RealIoV2(),
+            FakeIoV2(),
+            id="ensure ABC based IO wrapper matches fake",
+        ),
+        pytest.param(
+            RealIoV2,
+            IoBase,
+            id="ensure ABC based IO wrapper matches base class",
         ),
     ],
 )
