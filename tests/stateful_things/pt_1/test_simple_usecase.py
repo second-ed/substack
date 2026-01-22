@@ -1,5 +1,5 @@
-from src_code.adapters import FakeIo
-from src_code.simple_usecase import some_usecase_fn
+from substack.stateful_things.pt_1.adapters import FakeIo
+from substack.stateful_things.pt_1.simple_usecase import some_usecase_fn
 
 
 def test_some_usecase_fn() -> None:

@@ -1,4 +1,4 @@
-from src_code.adapters import IoProtocol, RealIo
+from .adapters import IoProtocol, RealIo
 
 
 def some_usecase_fn(

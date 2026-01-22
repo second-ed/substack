@@ -1,5 +1,6 @@
 import pytest
-from src_code.adapters import FakeIo, IoProtocol, RealIo
+
+from substack.stateful_things.pt_1.adapters import FakeIo, IoProtocol, RealIo
 
 
 @pytest.mark.parametrize(
