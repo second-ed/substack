@@ -1,21 +1,24 @@
 from __future__ import annotations
 
 import json
+from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Protocol, runtime_checkable
 
 import polars as pl
 
 
-@runtime_checkable
-class IoProtocol(Protocol):
+class IoBase(ABC):
+    @abstractmethod
     def read_json(self, path: str) -> dict: ...
+    @abstractmethod
     def write_json(self, data: dict, path: str) -> None: ...
+    @abstractmethod
     def read_parquet(self, path: str) -> pl.DataFrame: ...
+    @abstractmethod
     def write_parquet(self, data: pl.DataFrame, path: str) -> None: ...
 
 
-class RealIo:
+class RealIo(IoBase):
     def read_json(self, path: str) -> dict:
         return json.loads(Path(path).read_text())
 
@@ -29,7 +32,7 @@ class RealIo:
         data.to_parquet(path)
 
 
-class FakeIo:
+class FakeIo(IoBase):
     def __init__(self, files: dict | None = None) -> None:
         self.files = files or {}
 
