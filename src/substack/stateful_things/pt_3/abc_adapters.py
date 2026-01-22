@@ -1,44 +1,47 @@
 from __future__ import annotations
 
-import json
-from abc import ABC, abstractmethod
-from pathlib import Path
-
 import polars as pl
 
+from .io_funcs import READ_FUNCS, WRITE_FUNCS, ReadFn, WriteFn
 
-class IoBase(ABC):
-    @abstractmethod
-    def read(self, path: str, file_type: str) -> dict | pl.DataFrame: ...
-    @abstractmethod
-    def write(self, data: dict | pl.DataFrame, path: str, file_type: str) -> None: ...
+
+class IoBase:
+    def __init__(
+        self,
+        read_fns: dict[str, ReadFn] = READ_FUNCS,
+        write_fns: dict[str, WriteFn] = WRITE_FUNCS,
+    ) -> None:
+        self.read_fns = read_fns
+        self.write_fns = write_fns
+
+    def read(self, path: str, file_type: str) -> dict | pl.DataFrame:
+        if file_type not in self.read_fns:
+            raise NotImplementedError(f"{file_type = } not in {self.read_fns}")
+        return self.read_fns[file_type](path)
+
+    def write(self, data: dict | pl.DataFrame, path: str, file_type: str) -> None:
+        if file_type not in self.read_fns:
+            raise NotImplementedError(f"{file_type = } not in {self.write_fns}")
+        return self.write_fns[file_type](data, path)
 
 
 class RealIoV2(IoBase):
-    def read(self, path: str, file_type: str) -> dict | pl.DataFrame:
-        if file_type == "json":
-            return json.loads(Path(path).read_text())
-        if file_type == "parquet":
-            return pl.read_parquet(path)
-        raise ValueError(f"given invalid {file_type = }")
-
-    def write(self, data: dict | pl.DataFrame, path: str, file_type: str) -> None:
-        if file_type == "json":
-            Path(path).write_text(json.dumps(data))
-        elif file_type == "parquet":
-            data.to_parquet(path)
-        raise ValueError(f"given invalid {file_type = }")
+    pass
 
 
 class FakeIoV2(IoBase):
-    def __init__(self, files: dict | None = None) -> None:
-        self.files = files or {}
-        self.log = []
+    def __init__(
+        self,
+        read_fns: dict[str, ReadFn] = READ_FUNCS,
+        write_fns: dict[str, WriteFn] = WRITE_FUNCS,
+    ) -> None:
+        self.read_fns = dict.fromkeys(read_fns, self._read_fn)
+        self.write_fns = dict.fromkeys(write_fns, self._write_fn)
 
-    def read(self, path: str, file_type: str) -> dict | pl.DataFrame:
+    def _read_fn(self, path: str, file_type: str) -> dict | pl.DataFrame:
         self.log.append({"func": "read", "path": path, "file_type": file_type})
         return self.files[path]
 
-    def write(self, data: dict | pl.DataFrame, path: str, file_type: str) -> None:
+    def _write_fn(self, data: dict | pl.DataFrame, path: str, file_type: str) -> None:
         self.log.append({"func": "write", "path": path, "file_type": file_type})
         self.files[path] = data

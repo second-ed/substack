@@ -65,8 +65,8 @@ class FakeMismatchingSignature:
             id="ensure IO wrapper matches protocol",
         ),
         pytest.param(
-            RealIoV2(),
-            FakeIoV2(),
+            RealIoV2,
+            FakeIoV2,
             id="ensure ABC based IO wrapper matches fake",
         ),
         pytest.param(
