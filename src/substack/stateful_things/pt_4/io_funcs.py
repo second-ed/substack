@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from enum import Enum, unique
 from pathlib import Path
 
 import polars as pl
@@ -9,6 +10,12 @@ import polars as pl
 type Data = dict | pl.DataFrame
 type ReadFn = Callable[[str], Data]
 type WriteFn = Callable[[Data, str], None]
+
+
+@unique
+class FileType(Enum):
+    JSON = "json"
+    PARQUET = "parquet"
 
 
 def read_json(path: str) -> dict:
@@ -27,6 +34,12 @@ def write_parquet(data: pl.DataFrame, path: str) -> None:
     data.to_parquet(path)
 
 
-READ_FUNCS: dict[str, ReadFn] = {"json": read_json, "parquet": read_parquet}
+READ_FUNCS: dict[str, ReadFn] = {
+    FileType.JSON: read_json,
+    FileType.PARQUET: read_parquet,
+}
 
-WRITE_FUNCS: dict[str, WriteFn] = {"json": write_json, "parquet": write_parquet}
+WRITE_FUNCS: dict[str, WriteFn] = {
+    FileType.JSON: write_json,
+    FileType.PARQUET: write_parquet,
+}
